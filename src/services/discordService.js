@@ -1,15 +1,27 @@
-import { Client, GatewayIntentBits } from 'discord.js';
+const { Client, GatewayIntentBits } = require('discord.js');
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
 
-client.on('ready', () => {
+client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-client.login(process.env.DISCORD_BOT_TOKEN);
+client.login(process.env.DISCORD_BOT_TOKEN).catch((err) => {
+  console.error('Failed to login to Discord:', err);
+});
 
-export async function sendDiscordNotification(channelId, message) {
+async function sendDiscordNotification(channelId, message) {
   try {
+    if (!client.isReady()) {
+      console.error('Discord client is not ready.');
+      return;
+    }
     const channel = await client.channels.fetch(channelId);
     if (!channel) {
       console.error(`Discord channel with ID ${channelId} not found.`);
@@ -21,3 +33,5 @@ export async function sendDiscordNotification(channelId, message) {
     console.error('Error sending Discord notification:', error);
   }
 }
+
+module.exports = { sendDiscordNotification };

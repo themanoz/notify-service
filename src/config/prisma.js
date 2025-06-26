@@ -1,14 +1,15 @@
-const { PrismaClient } = require("@prisma/client");
+// Improved: Standardized singleton pattern and error handling
+const { PrismaClient } = require('@prisma/client');
 
 let prisma;
 
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === 'production') {
   prisma = new PrismaClient();
 } else {
-  if (!global.prisma) {
-    global.prisma = new PrismaClient();
+  if (!global._prisma) {
+    global._prisma = new PrismaClient();
   }
-  prisma = global.prisma;
+  prisma = global._prisma;
 }
 
-module.exports= prisma;
+module.exports = prisma;

@@ -1,6 +1,13 @@
-const { Queue } = require("bullmq");
-const connection = require("../config/redis.js");
+// Improved: Added error handling and code style
+const { Queue } = require('bullmq');
+const connection = require('../config/redis.js');
 
-const githubCheckQueue = new Queue("githubCheck", { connection });
+let githubCheckQueue;
+try {
+  githubCheckQueue = new Queue('githubCheck', { connection });
+} catch (err) {
+  console.error('Failed to initialize githubCheckQueue:', err);
+  throw err;
+}
 
 module.exports = githubCheckQueue;
