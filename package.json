@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js",
+    "worker": "node src/worker.js"
   },
   "keywords": [],
   "author": "",
@@ -11,7 +12,8 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.10.1",
-    "bullmq": "^5.56.0",
+    "axios": "^1.10.0",
+    "bullmq": "latest",
     "discord.js": "^14.21.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",

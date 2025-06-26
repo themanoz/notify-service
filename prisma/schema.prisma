@@ -1,9 +1,162 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String         @id @default(cuid())
+  name            String?
+  username        String         @unique
+  email           String?        @unique
+  emailVerified   DateTime?
+  image           String?
+  accounts        Account[]
+  sessions        Session[]
+  projects        Project[]
+  subscriptions   Subscription[]
+  discordId       String?
+  discordUsername String?
+  discordAvatar   String?
+  discordGuildIds String[]       @default([])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  repo        String
+  full_name   String   @unique
+  owner       String
+  labels      String[] @default([])
+  lastChecked DateTime @default(now())
+  users       User[]
+}
+
+model Product {
+  id                String         @id @default(uuid())
+  name              String
+  description       String[]
+  product_id        String         @unique
+  business_id       String
+  is_recurring      Boolean        @default(true)
+  price             Float?
+  currency          String         @default("USD")
+  subscriptions     Subscription[] // Relation to subscriptions
+  active            Boolean        @default(true)
+  trial_period_days Int?
+  payment_frequency String? // "Month", "Year", etc.
+  billing_interval  Int?           @default(1)
+}
+
+model Subscription {
+  id                     String             @id @default(uuid())
+  userId                 String             @unique
+  status                 SubscriptionStatus
+  externalSubscriptionId String             @unique
+  subscriptionId         String             @unique
+  productId              String
+  product                Product?           @relation(fields: [productId], references: [product_id])
+
+  // Payment and billing details
+  currency      String? @default("USD")
+  amount        Float?
+  interval      String? // "month", "year"
+  intervalCount Int?    @default(1)
+
+  // Important dates
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  cancelAt           DateTime?
+  canceledAt         DateTime?
+  trialStart         DateTime?
+  trialEnd           DateTime?
+
+  // Metadata from payment provider
+  customerEmail     String?
+  customerName      String?
+  customerId        String?
+  paymentMethodId   String?
+  lastPaymentId     String?
+  lastPaymentDate   DateTime?
+  lastPaymentStatus String?
+
+  // Payment history tracking
+  paymentFailureCount Int       @default(0)
+  lastPaymentAttempt  DateTime?
+  nextBillingDate     DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([productId])
+  @@index([customerId])
+}
+
+// Payment records for historical tracking
+model PaymentRecord {
+  id             String    @id @default(uuid())
+  paymentId      String    @unique
+  subscriptionId String?
+  userId         String
+  amount         Float
+  currency       String    @default("USD")
+  status         String
+  paymentMethod  String?
+  createdAt      DateTime  @default(now())
+  processedAt    DateTime?
+  metadata Json?
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([status])
+}
+
+enum SubscriptionStatus {
+  ACTIVE // Subscription is active
+  CANCELED // Subscription is cancelled but might still be active until the end of billing period
+  TRIAL // In trial period
+  EXPIRED // No longer active
 }
