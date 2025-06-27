@@ -1,4 +1,3 @@
-// Improved: Added error handling, logging, and code style
 const { Worker } = require('bullmq');
 const connection = require('../config/redis.js');
 const getRepositoryIssues = require('../services/githubService.js');
