@@ -1,4 +1,3 @@
-// Improved: Standardized imports, added error handling, and graceful shutdown
 const githubCheckWorker = require('./workers/githubCheckWorker.js');
 
 console.log('BullMQ Worker started, waiting for jobs...');
