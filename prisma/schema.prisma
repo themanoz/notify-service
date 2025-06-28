@@ -7,23 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id              String         @id @default(cuid())
-  name            String?
-  username        String         @unique
-  email           String?        @unique
-  emailVerified   DateTime?
-  image           String?
-  accounts        Account[]
-  sessions        Session[]
-  projects        Project[]
-  subscriptions   Subscription[]
-  discordId       String?
-  discordUsername String?
-  discordAvatar   String?
-  discordGuildIds String[]       @default([])
-}
-
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -62,14 +45,43 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model User {
+  id              String         @id @default(cuid())
+  name            String?
+  username        String         @unique
+  email           String?        @unique
+  emailVerified   DateTime?
+  image           String?
+  accounts        Account[]
+  sessions        Session[]
+  subscriptions   Subscription[]
+  discordId       String?
+  discordUsername String?
+  discordAvatar   String?
+  discordGuildIds String[]       @default([])
+  watchlists      Watchlist[]
+}
+
 model Project {
-  id          String   @id @default(uuid())
+  id          String      @id @default(uuid())
   repo        String
-  full_name   String   @unique
+  full_name   String      @unique
   owner       String
-  labels      String[] @default([])
-  lastChecked DateTime @default(now())
-  users       User[]
+  labels      String[]    @default([])
+  lastChecked DateTime?   
+  watchlists  Watchlist[]
+}
+
+model Watchlist {
+  id String @id @default(uuid())
+  userId    String
+  projectId String
+  labels    String[]
+  addedAt   DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
 }
 
 model Product {
@@ -147,7 +159,7 @@ model PaymentRecord {
   paymentMethod  String?
   createdAt      DateTime  @default(now())
   processedAt    DateTime?
-  metadata Json?
+  metadata       Json?
 
   @@index([userId])
   @@index([subscriptionId])

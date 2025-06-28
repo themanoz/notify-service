@@ -1,9 +1,8 @@
-// Improved: Standardized imports, error handling, and dotenv usage
 const express = require('express');
 const dotenv = require('dotenv');
 const startCronScheduler = require('./jobs/cronScheduler.js');
 
-dotenv.config(); // Ensure env vars are loaded at entry point
+dotenv.config();
 
 const app = express();
 app.use(express.json());

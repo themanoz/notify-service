@@ -3,39 +3,40 @@ const prisma = require("../config/prisma.js");
 const githubCheckQueue = require("../queues/githubCheckQueue.js");
 
 function startCronScheduler() {
-  console.log("Cron scheduler started: polling every minute");
+  console.log("Cron scheduler started: polling every 30 seconds");
 
-  cron.schedule("*/1 * * * *", async () => {
+  cron.schedule("*/30 * * * * *", async () => {
     console.log("Cron run: fetching projects…");
 
-    // include the users relation
     const projects = await prisma.project.findMany({
-      select: {
-        id: true,
-        full_name: true,
-        lastChecked: true,
-        users: { select: { id: true } },
-      },
+      where: { watchlists: { some: {} } },
+      select: { id: true, full_name: true, lastChecked: true },
     });
+
+    console.log(`Found ${projects.length} projects to check`);
 
     for (const proj of projects) {
       const [owner, repo] = proj.full_name.split("/");
-
-      // enqueue once per user
-      for (const { id: userId } of proj.users) {
-        await githubCheckQueue.add(
-          `check-${proj.id}-${userId}`,
-          {
-            projectId: proj.id,
-            userId,
-            owner,
-            repo,
-            lastChecked: proj.lastChecked,
-          },
-          { jobId: `check-${proj.id}-${userId}`, removeOnComplete: true }
+      if (!owner || !repo) {
+        console.warn(
+          `Skipping project ${proj.id} with invalid full_name: ${proj.full_name}`
         );
-        console.log(`Enqueued ${owner}/${repo} for user ${userId}`);
+        continue;
       }
+
+      // ✅ Enqueue a single job per project
+      await githubCheckQueue.add(
+        `check-${proj.id}`,
+        {
+          projectId: proj.id,
+          owner,
+          repo,
+          lastChecked: proj.lastChecked,
+        },
+        { jobId: `check-${proj.id}`, removeOnComplete: true } // Single job per project
+      );  
+
+      console.log(`Enqueued ${owner}/${repo}`);
     }
   });
 }

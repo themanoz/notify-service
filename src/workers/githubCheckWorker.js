@@ -1,26 +1,49 @@
-const { Worker } = require('bullmq');
-const connection = require('../config/redis.js');
-const getRepositoryIssues = require('../services/githubService.js');
+const { Worker } = require("bullmq");
+const connection = require("../config/redis.js");
+const getRepositoryIssues = require("../services/githubService.js");
+const prisma = require("../config/prisma.js");
 
 const worker = new Worker(
-  'githubCheck',
+  "githubCheck",
   async (job) => {
     console.log(`Jobs will be picked up by worker with job ID: ${job.id}`);
+
     const { projectId, userId, owner, repo, lastChecked } = job.data;
+
     console.log(
       `Processing ${owner}/${repo} (proj:${projectId}, user:${userId})`
     );
+
     try {
-      const issues = await getRepositoryIssues(
-        userId,
-        owner,
-        repo,
-        lastChecked
-      );
+      const watchlistUsers = await prisma.watchlist.findMany({
+        where: { projectId },
+        select: { userId: true, addedAt: true, labels: true },
+      });
+
+      console.log("Watchlist Users: ", watchlistUsers);
+
+      if (watchlistUsers.length === 0) {
+        console.warn(`No users watching project ${projectId}`);
+        return;
+      }
+
+      // Randomly pick one user’s token
+      const randomUser =
+        watchlistUsers[Math.floor(Math.random() * watchlistUsers.length)];
+      const { userId, addedAt } = randomUser;
+
+      const since = lastChecked ?? addedAt;
+
+      const issues = await getRepositoryIssues(userId, owner, repo, since);
+
+      await prisma.project.update({
+        where: { id: projectId },
+        data: { lastChecked: new Date() },
+      });
+
       console.log(`→ ${issues.length} open issues for ${owner}/${repo}`);
     } catch (err) {
       console.error(`Error in job ${job.id}:`, err);
-      // Optionally: throw err to retry job
       throw err;
     }
   },
@@ -28,12 +51,12 @@ const worker = new Worker(
     connection,
     concurrency: 5,
     attempts: 3,
-    backoff: { type: 'exponential', delay: 5000 },
+    backoff: { type: "exponential", delay: 5000 },
   }
 );
 
-worker.on('completed', (job) => console.log(`✅ Job ${job.id} done`));
-worker.on('failed', (job, e) => console.error(`❌ Job ${job.id} failed`, e));
-worker.on('error', (err) => console.error('Worker error:', err));
+worker.on("completed", (job) => console.log(`✅ Job ${job.id} done`));
+worker.on("failed", (job, e) => console.error(`❌ Job ${job.id} failed`, e));
+worker.on("error", (err) => console.error("Worker error:", err));
 
 module.exports = worker;

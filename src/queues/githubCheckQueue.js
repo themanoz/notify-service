@@ -1,4 +1,3 @@
-// Improved: Added error handling and code style
 const { Queue } = require('bullmq');
 const connection = require('../config/redis.js');
 
