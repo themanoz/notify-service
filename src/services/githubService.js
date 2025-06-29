@@ -8,7 +8,8 @@ async function getRepositoryIssues(userId, owner, repo, since) {
     const account = await prisma.account.findFirst({
       where: { userId, provider: "github" },
     });
-    const token = account?.access_token || process.env.GITHUB_TOKEN;
+
+    const token = account?.access_token;
     if (!token) throw new Error("No GitHub token available");
 
     const url = `${API}/repos/${owner}/${repo}/issues`;
@@ -23,7 +24,6 @@ async function getRepositoryIssues(userId, owner, repo, since) {
     };
 
     const response = await axios.get(url, { params, headers });
-    console.log("Labels: ", response.data.labels);
 
     const issues = response.data;
 
