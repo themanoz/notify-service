@@ -15,7 +15,7 @@ client.login(process.env.DISCORD_BOT_TOKEN).catch((err) => {
 
 async function sendDiscordNotification(discordId, issues) {
   try {
-    if (!client.readyAt()) {
+    if (!client.isReady()) {
       console.error("Discord client is not ready.");
       return;
     }
@@ -28,18 +28,18 @@ async function sendDiscordNotification(discordId, issues) {
 
     let message = `🔔 **GitHub Issues Matching Your Interests:**\n\n`;
 
-    for (const repoBlock of issues) {
-      message += `📦 **${repoBlock.repo}**\n`;
-      repoBlock.issues.forEach((issue, index) => {
+    for (const repo in issues) {
+      message += `📦 **${repo}**\n`;
+      issues[repo].forEach((issue, index) => {
         message += `> [${index + 1}. ${issue.title}](${issue.url})\n`;
       });
       message += `\n`;
     }
 
-    console.log("Message: ", message);
-
     // Split large messages if exceeding Discord's 2000 character limit
     const messageChunks = splitMessage(message, 2000);
+
+    console.log("Message Chunks: ", messageChunks);
 
     for (const chunk of messageChunks) {
       await user.send(chunk);
