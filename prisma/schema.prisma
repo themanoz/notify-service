@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Account {
-  id                String  @id @default(cuid())
+  id                String   @id @default(cuid())
   userId            String
   type              String
   provider          String
@@ -20,11 +20,9 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -46,20 +44,21 @@ model VerificationToken {
 }
 
 model User {
-  id              String         @id @default(cuid())
-  name            String?
-  username        String         @unique
-  email           String?        @unique
-  emailVerified   DateTime?
-  image           String?
-  accounts        Account[]
-  sessions        Session[]
-  subscriptions   Subscription[]
-  discordId       String?
-  discordUsername String?
-  discordAvatar   String?
-  discordGuildIds String[]       @default([])
-  watchlists      Watchlist[]
+  id                  String        @id @default(cuid())
+  name                String?
+  username            String        @unique
+  email               String?       @unique
+  emailVerified       DateTime?
+  image               String?
+  discordId           String?
+  discordUsername     String?
+  discordAvatar       String?
+  hasReceivedGreeting Boolean       @default(false)
+  isBotInSharedGuild  Boolean       @default(false)
+  accounts            Account[]
+  sessions            Session[]
+  subscriptions       Subscription?
+  watchlists          Watchlist[]
 }
 
 model Project {
@@ -68,18 +67,18 @@ model Project {
   full_name   String      @unique
   owner       String
   labels      String[]    @default([])
-  lastChecked DateTime?   
+  lastChecked DateTime?
   watchlists  Watchlist[]
 }
 
 model Watchlist {
-  id String @id @default(uuid())
+  id        String   @id @default(uuid())
   userId    String
   projectId String
   labels    String[]
   addedAt   DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, projectId])
 }
@@ -93,11 +92,11 @@ model Product {
   is_recurring      Boolean        @default(true)
   price             Float?
   currency          String         @default("USD")
-  subscriptions     Subscription[] // Relation to subscriptions
   active            Boolean        @default(true)
   trial_period_days Int?
-  payment_frequency String? // "Month", "Year", etc.
+  payment_frequency String?
   billing_interval  Int?           @default(1)
+  subscriptions     Subscription[]
 }
 
 model Subscription {
@@ -107,39 +106,30 @@ model Subscription {
   externalSubscriptionId String             @unique
   subscriptionId         String             @unique
   productId              String
-  product                Product?           @relation(fields: [productId], references: [product_id])
-
-  // Payment and billing details
-  currency      String? @default("USD")
-  amount        Float?
-  interval      String? // "month", "year"
-  intervalCount Int?    @default(1)
-
-  // Important dates
-  currentPeriodStart DateTime?
-  currentPeriodEnd   DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  cancelAt           DateTime?
-  canceledAt         DateTime?
-  trialStart         DateTime?
-  trialEnd           DateTime?
-
-  // Metadata from payment provider
-  customerEmail     String?
-  customerName      String?
-  customerId        String?
-  paymentMethodId   String?
-  lastPaymentId     String?
-  lastPaymentDate   DateTime?
-  lastPaymentStatus String?
-
-  // Payment history tracking
-  paymentFailureCount Int       @default(0)
-  lastPaymentAttempt  DateTime?
-  nextBillingDate     DateTime?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency               String?            @default("USD")
+  amount                 Float?
+  interval               String?
+  intervalCount          Int?               @default(1)
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  cancelAt               DateTime?
+  canceledAt             DateTime?
+  trialStart             DateTime?
+  trialEnd               DateTime?
+  customerEmail          String?
+  customerName           String?
+  customerId             String?
+  paymentMethodId        String?
+  lastPaymentId          String?
+  lastPaymentDate        DateTime?
+  lastPaymentStatus      String?
+  paymentFailureCount    Int                @default(0)
+  lastPaymentAttempt     DateTime?
+  nextBillingDate        DateTime?
+  product                Product            @relation(fields: [productId], references: [product_id])
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
@@ -147,7 +137,6 @@ model Subscription {
   @@index([customerId])
 }
 
-// Payment records for historical tracking
 model PaymentRecord {
   id             String    @id @default(uuid())
   paymentId      String    @unique
@@ -167,8 +156,8 @@ model PaymentRecord {
 }
 
 enum SubscriptionStatus {
-  ACTIVE // Subscription is active
-  CANCELED // Subscription is cancelled but might still be active until the end of billing period
-  TRIAL // In trial period
-  EXPIRED // No longer active
+  ACTIVE
+  CANCELED
+  TRIAL
+  EXPIRED
 }

@@ -15,7 +15,7 @@ client.login(process.env.DISCORD_BOT_TOKEN).catch((err) => {
 
 async function sendDiscordNotification(discordId, issues) {
   try {
-    if (!client.isReady()) {
+    if (!client.readyAt()) {
       console.error("Discord client is not ready.");
       return;
     }

@@ -1,13 +1,11 @@
+const redis = require("ioredis");
 
 function getRedisConnection() {
-  const connection = {
-    host: process.env.REDIS_HOST,
+  return new redis({
+    host: process.env.REDIS_HOST || "127.0.0.1",
     port: Number(process.env.REDIS_PORT || 6379),
-  };
-  if (!connection.host) {
-    throw new Error('REDIS_HOST environment variable is required');
-  }
-  return connection;
+    maxRetriesPerRequest: null,
+  });
 }
 
 module.exports = getRedisConnection;

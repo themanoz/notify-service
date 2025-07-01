@@ -1,20 +1,20 @@
 const { Worker } = require("bullmq");
-const connection = require("../config/redis.js");
+const connection = require("../config/redis")();
 const getRepositoryIssues = require("../services/githubService.js");
 const prisma = require("../config/prisma.js");
-const { sendDiscordNotification } = require("../services/discordService.js");
+const notificationQueue = require("../queues/notificationQueue.js");
 
 const worker = new Worker(
   "githubCheck",
   async (job) => {
-    console.log(`Job picked up: ${job.id}`);
+    console.log(`Jobs getting picked up by githubCheckWorker.`);
 
     const { projectId, owner, repo, lastChecked } = job.data;
 
     try {
       const watchlistEntries = await prisma.watchlist.findMany({
         where: { projectId },
-        select: { userId: true, labels: true },
+        select: { userId: true, labels: true, addedAt: true },
       });
 
       if (watchlistEntries.length === 0) {
@@ -28,7 +28,7 @@ const worker = new Worker(
 
       const since = lastChecked ?? addedAt;
 
-      console.log("Fetching repositories......")
+      console.log(`Fetching issues for ${owner}/${repo} since ${since}`);
 
       const issues = await getRepositoryIssues(userId, owner, repo, since);
 
@@ -43,21 +43,18 @@ const worker = new Worker(
       for (const entry of watchlistEntries) {
         const userId = entry.userId;
 
-        // Initialize if not exists
         if (!userIssuesMap[userId]) {
           userIssuesMap[userId] = {};
         }
 
-        // Filter issues by labels the user is watching
         const userLabels = entry.labels.map((label) => label.toLowerCase());
-        console.log("user labels: ", userLabels);
+        console.log(`User ${userId} labels: `, userLabels);
 
         for (const issue of issues) {
           const issueLabels = issue.labels.map((label) =>
             label.name.toLowerCase()
           );
-
-          console.log("issue labels: ", issueLabels);
+          console.log("Issue labels: ", issueLabels);
 
           if (issueLabels.some((label) => userLabels.includes(label))) {
             if (!userIssuesMap[userId][`${owner}/${repo}`]) {
@@ -71,28 +68,27 @@ const worker = new Worker(
           }
         }
       }
+
+      console.log("User issues map: ",userIssuesMap);
+
       if (Object.keys(userIssuesMap).length === 0) {
         console.log(`No issues matched for any users in project ${projectId}`);
         return;
       }
-      // Send Discord notifications per user
+
+      
+      // Enqueue batch notifications for each user
       for (const userId of Object.keys(userIssuesMap)) {
-        const user = await prisma.user.findUnique({ where: { id: userId } });
-
-        if (!user || !user.discordId) {
-          console.warn(`User ${userId} does not have Discord connected.`);
-          continue;
-        }
-
-        // Prepare issues in batch format
-        const formattedIssues = Object.entries(userIssuesMap[userId]).map(
-          ([repo, issues]) => ({
-            repo,
-            issues,
-          })
+        await notificationQueue.add(
+          "sendNotification",
+          {
+            userId,
+            issuesByRepo: userIssuesMap[userId],
+          },
+          { removeOnComplete: true }
         );
 
-        await sendDiscordNotification(user.discordId, formattedIssues);
+        console.log(`Enqueued notification for user ${userId}`);
       }
 
       // Update lastChecked timestamp
@@ -101,7 +97,7 @@ const worker = new Worker(
         data: { lastChecked: new Date() },
       });
 
-      console.log(`✅ Completed job for ${owner}/${repo}`);
+      console.log(`✅ Completed githubCheck job for ${owner}/${repo}`);
     } catch (err) {
       console.error(`❌ Error processing job ${job.id}:`, err);
       throw err;
@@ -109,6 +105,7 @@ const worker = new Worker(
   },
   {
     connection,
+    prefix: "notifyService",
     concurrency: 5,
     attempts: 3,
     backoff: { type: "exponential", delay: 5000 },
