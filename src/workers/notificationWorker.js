@@ -11,6 +11,8 @@ const notificationWorker = new Worker(
     try {
       const { userId, issuesByRepo } = job.data;
 
+      console.log("Issues: ", issuesByRepo);
+
       const user = await prisma.user.findUnique({ where: { id: userId } });
 
       if (!user || !user.discordId) {
@@ -20,12 +22,9 @@ const notificationWorker = new Worker(
 
       console.log("✅ User Discord ID: ", user.discordId);
 
-      const response = await sendDiscordNotification(
-        user.discordId,
-        issuesByRepo
-      );
+      await sendDiscordNotification(user.discordId, issuesByRepo);
 
-      console.log(`✅ Notification sent to ${user.discordId}`, response);
+      console.log(`✅ Notification sent to ${user.discordId}`);
     } catch (err) {
       console.error("❌ Worker job failed: ", err);
     }
