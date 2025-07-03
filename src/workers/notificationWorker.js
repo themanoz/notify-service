@@ -1,7 +1,7 @@
 const { Worker } = require("bullmq");
 const prisma = require("../config/prisma");
 const { sendDiscordNotification } = require("../services/discordService");
-const connection = require("../config/redis")();
+const connection = require("../config/redis");
 
 const notificationWorker = new Worker(
   "notificationQueue",
@@ -29,7 +29,7 @@ const notificationWorker = new Worker(
       console.error("❌ Worker job failed: ", err);
     }
   },
-  { connection, prefix: "notifyService", concurrency: 10 }
+  { connection, prefix: "notifyService", concurrency: 10, attempts: 3, backoff: { type: "exponential", delay: 5000 } }
 );
 
 module.exports = notificationWorker;

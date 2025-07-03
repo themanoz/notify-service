@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  github-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile 
+    container_name: github-worker
+    env_file:
+      - .env
+    command: node src/workers/githubWorkerRunner.js
+    restart: always
+
+  notification-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: notification-worker
+    env_file:
+      - .env
+    command: node src/workers/notificationWorkerRunner.js
+    restart: always
+
+  notify-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: notify-api
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    command: npm start
+    restart: always

@@ -2,6 +2,7 @@
   "name": "notify-service",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node src/index.js",
     "githubWorker": "node src/workers/githubWorkerRunner.js",
@@ -13,6 +14,7 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.10.1",
+    "@upstash/redis": "^1.35.1",
     "axios": "^1.10.0",
     "bullmq": "latest",
     "discord.js": "^14.21.0",

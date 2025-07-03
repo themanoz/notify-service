@@ -3,40 +3,61 @@ const prisma = require("../config/prisma.js");
 const githubCheckQueue = require("../queues/githubCheckQueue.js");
 
 function startCronScheduler() {
-  console.log("Cron scheduler started: polling every 30 seconds");
+ console.log("Cron scheduler started: polling every 30 seconds");
 
   cron.schedule("*/30 * * * * *", async () => {
-    console.log("Cron run: fetching projects…");
+    console.log("Cron run: fetching user watchlist repositories...");
 
-    const projects = await prisma.project.findMany({
-      where: { watchlists: { some: {} } },
-      select: { id: true, full_name: true, lastChecked: true },
-    });
+    try {
+      const repositories = await prisma.watchlist.findMany({
+        select: {
+          id: true,
+          project: {
+            select:{
+              id: true,
+              full_name: true,
+             
+            }
+          },
+          addedAt: true,
+          labels: true,
+          lastChecked: true,
+        }
+      });
 
-    console.log(`Found ${projects.length} projects to check`);
+      console.log(`Found ${repositories.length} repositories to check`);
 
-    for (const proj of projects) {
-      const [owner, repo] = proj.full_name.split("/");
-      if (!owner || !repo) {
-        console.warn(
-          `Skipping project ${proj.id} with invalid full_name: ${proj.full_name}`
+      for (const repository of repositories) {
+        const [owner, repo] = repository.project.full_name.split("/");
+        if (!owner || !repo) {
+          console.warn(
+            `Skipping project ${repository.id} with invalid full_name: ${repository.full_name}`
+          );
+          continue;
+        }
+
+        // ✅ Enqueue a single job per project
+        await githubCheckQueue.add(
+          `check-${repository.id}`,
+          {
+            projectId: repository.project.id,
+            owner,
+            repo,
+            since: repository.lastChecked ?? repository.addedAt,
+          },
+          {
+            jobId: `check-${repository.id}`,
+            removeOnComplete: true,
+            removeOnFail: true,
+            timeout: 15000,
+          } 
         );
-        continue;
+
+        console.log(`Enqueued ${owner}/${repo}`);
       }
-
-      // ✅ Enqueue a single job per project
-      await githubCheckQueue.add(
-        `check-${proj.id}`,
-        {
-          projectId: proj.id,
-          owner,
-          repo,
-          lastChecked: proj.lastChecked,
-        },
-        { jobId: `check-${proj.id}`, removeOnComplete: true } // Single job per project
-      );  
-
-      console.log(`Enqueued ${owner}/${repo}`);
+    } catch (err) {
+      console.error(`❌ Error running cron job`, err);
+      throw err;
     }
   });
 }

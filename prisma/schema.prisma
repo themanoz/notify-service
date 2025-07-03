@@ -62,23 +62,23 @@ model User {
 }
 
 model Project {
-  id          String      @id @default(uuid())
-  repo        String
-  full_name   String      @unique
-  owner       String
-  labels      String[]    @default([])
-  lastChecked DateTime?
-  watchlists  Watchlist[]
+  id         String      @id @default(uuid())
+  repo       String
+  full_name  String      @unique
+  owner      String
+  labels     String[]    @default([])
+  watchlists Watchlist[]
 }
 
 model Watchlist {
-  id        String   @id @default(uuid())
-  userId    String
-  projectId String
-  labels    String[]
-  addedAt   DateTime @default(now())
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid())
+  userId      String
+  projectId   String
+  labels      String[]
+  addedAt     DateTime  @default(now())
+  lastChecked DateTime?
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, projectId])
 }

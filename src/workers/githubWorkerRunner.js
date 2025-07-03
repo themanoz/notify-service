@@ -1,5 +1,4 @@
 const githubCheckWorker = require('./githubCheckWorker.js');
-const connection = require("../config/redis");
 
 console.log('🚀 GitHub Check Worker started...');
 

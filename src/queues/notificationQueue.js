@@ -1,5 +1,5 @@
 const { Queue } = require('bullmq');
-const connection = require("../config/redis")();
+const connection = require("../config/redis");
 
 try {
   notificationQueue = new Queue('notificationQueue', { connection, prefix:"notifyService" });

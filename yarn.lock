@@ -304,6 +304,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@upstash/redis@npm:^1.35.1":
+  version: 1.35.1
+  resolution: "@upstash/redis@npm:1.35.1"
+  dependencies:
+    uncrypto: ^0.1.3
+  checksum: 1a889a0f004325f72ca7d070b41cfdbd27613934fed702b7ba2516c27c0c5aa7e9ec6ceecdcc49533146b3c50f5311c634045236d659ab393d2a60ba825d4f7d
+  languageName: node
+  linkType: hard
+
 "@vladfrangu/async_event_emitter@npm:^2.2.4, @vladfrangu/async_event_emitter@npm:^2.4.6":
   version: 2.4.6
   resolution: "@vladfrangu/async_event_emitter@npm:2.4.6"
@@ -1470,6 +1479,7 @@ __metadata:
   resolution: "notify-service@workspace:."
   dependencies:
     "@prisma/client": ^6.10.1
+    "@upstash/redis": ^1.35.1
     axios: ^1.10.0
     bullmq: latest
     discord.js: ^14.21.0
@@ -1963,6 +1973,13 @@ __metadata:
     media-typer: ^1.1.0
     mime-types: ^3.0.0
   checksum: 0266e7c782238128292e8c45e60037174d48c6366bb2d45e6bd6422b611c193f83409a8341518b6b5f33f8e4d5a959f38658cacfea77f0a3505b9f7ac1ddec8f
+  languageName: node
+  linkType: hard
+
+"uncrypto@npm:^0.1.3":
+  version: 0.1.3
+  resolution: "uncrypto@npm:0.1.3"
+  checksum: 07160e08806dd6cea16bb96c3fd54cd70fc801e02fc3c6f86980144d15c9ebbd1c55587f7280a207b3af6cd34901c0d0b77ada5a02c2f7081a033a05acf409e2
   languageName: node
   linkType: hard
 
