@@ -15,6 +15,7 @@ const worker = new Worker(
       const watchlistEntries = await prisma.watchlist.findMany({
         where: { projectId },
         select: {
+          id: true,
           userId: true,
           labels: true,
           addedAt: true,
@@ -92,8 +93,8 @@ const worker = new Worker(
         console.log(`Enqueued notification for users`);
       }
 
-      await prisma.watchlist.update({
-        where: { id: projectId },
+      await prisma.watchlist.updateMany({
+        where: { projectId: projectId },
         data: { lastChecked: new Date() },
       });
 
