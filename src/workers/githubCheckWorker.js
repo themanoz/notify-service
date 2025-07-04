@@ -96,7 +96,7 @@ const worker = new Worker(
         console.log(`Enqueued notification for user ${userId}`);
       }
 
-      await prisma.project.update({
+      await prisma.watchlist.update({
         where: { id: projectId },
         data: { lastChecked: new Date() },
       });
