@@ -39,13 +39,13 @@ async function sendDiscordNotification(discordId, issues) {
     // Split large messages if exceeding Discord's 2000 character limit
     const messageChunks = splitMessage(message, 2000);
 
-    console.log("Message Chunks: ", messageChunks);
+    // console.log("Message Chunks: ", messageChunks);
 
     for (const chunk of messageChunks) {
       await user.send(chunk);
     }
 
-    console.log(`✅ Sent notification to Discord user ${discordId}`);
+    console.log(`✅ Sent notification to Discord user`);
   } catch (error) {
     console.error("❌ Error sending Discord notification:", error);
   }

@@ -6,12 +6,12 @@ const connection = require("../config/redis");
 const notificationWorker = new Worker(
   "notificationQueue",
   async (job) => {
-    console.log("📦 Received job data:", JSON.stringify(job.data, null, 2));
+    // console.log("📦 Received job data:", JSON.stringify(job.data, null, 2));
 
     try {
       const { userId, issuesByRepo } = job.data;
 
-      console.log("Issues: ", issuesByRepo);
+      // console.log("Issues: ", issuesByRepo);
 
       const user = await prisma.user.findUnique({ where: { id: userId } });
 
@@ -20,11 +20,11 @@ const notificationWorker = new Worker(
         return;
       }
 
-      console.log("✅ User Discord ID: ", user.discordId);
+      // console.log("✅ User Discord ID: ", user.discordId);
 
       await sendDiscordNotification(user.discordId, issuesByRepo);
 
-      console.log(`✅ Notification sent to ${user.discordId}`);
+      console.log(`✅ Notification sent`);
     } catch (err) {
       console.error("❌ Worker job failed: ", err);
     }

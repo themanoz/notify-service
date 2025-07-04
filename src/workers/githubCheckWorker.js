@@ -54,13 +54,11 @@ const worker = new Worker(
         }
 
         const userLabels = entry.labels.map((label) => label.toLowerCase());
-        console.log(`User ${userId} labels: `, userLabels);
 
         for (const issue of issues) {
           const issueLabels = issue.labels.map((label) =>
             label.name.toLowerCase()
           );
-          console.log("Issue labels: ", issueLabels);
 
           if (issueLabels.some((label) => userLabels.includes(label))) {
             if (!userIssuesMap[userId][`${owner}/${repo}`]) {
@@ -74,8 +72,6 @@ const worker = new Worker(
           }
         }
       }
-
-      console.log("User issues map: ", userIssuesMap);
 
       if (Object.keys(userIssuesMap).length === 0) {
         console.log(`No issues matched for any users in project ${projectId}`);
@@ -93,7 +89,7 @@ const worker = new Worker(
           { removeOnComplete: true }
         );
 
-        console.log(`Enqueued notification for user ${userId}`);
+        console.log(`Enqueued notification for users`);
       }
 
       await prisma.watchlist.update({

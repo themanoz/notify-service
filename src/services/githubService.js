@@ -27,13 +27,11 @@ async function getRepositoryIssues(userId, owner, repo, since) {
 
     const issues = response.data;
 
-    const issueDetails = issues.map((issue) => ({
+    issues.map((issue) => ({
       id: issue.title,
       body: issue.body,
       url: issue.html_url,
     }));
-
-    console.log("Issue Details: ", issueDetails);
     return response.data;
   } catch (err) {
     console.error("Error fetching repository issues:", err);
