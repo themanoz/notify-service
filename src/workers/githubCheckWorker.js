@@ -3,6 +3,7 @@ const connection = require("../config/redis");
 const getRepositoryIssues = require("../services/githubService.js");
 const prisma = require("../config/prisma.js");
 const notificationQueue = require("../queues/notificationQueue.js");
+require('dotenv').config();
 
 const worker = new Worker(
   "githubCheck",

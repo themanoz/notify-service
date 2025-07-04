@@ -2,6 +2,7 @@ const { Worker } = require("bullmq");
 const prisma = require("../config/prisma");
 const { sendDiscordNotification } = require("../services/discordService");
 const connection = require("../config/redis");
+require('dotenv').config();
 
 const notificationWorker = new Worker(
   "notificationQueue",
