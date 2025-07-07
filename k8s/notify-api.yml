@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notify-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notify-api
+  template:
+    metadata:
+      labels:
+        app: notify-api
+    spec:
+      containers:
+        - name: notify-api
+          image: themanoz/notify-service:v1.0.0
+          command: ["node", "src/index.js"]
+          envFrom:
+            - secretRef:
+                name: notify-secrets

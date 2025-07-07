@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notify-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notify-worker
+  template:
+    metadata:
+      labels:
+        app: notify-worker
+    spec:
+      containers:
+        - name: notify-worker
+          image: themanoz/notify-service:v1.0.0
+          command: ["node", "src/workers/notificationWorkerRunner.js"]
+          envFrom:
+            - secretRef:
+                name: notify-secrets
