@@ -1,9 +1,5 @@
 const Redis = require("ioredis");
 
-const redis = new Redis({
-  host: process.env.REDIS_HOST || "redis",
-  port: Number(process.env.REDIS_PORT || 6379),
-  maxRetriesPerRequest: null,
-});
+const redis = new Redis(process.env.UPSTASH_REDIS_URL);
 
 module.exports = redis;
