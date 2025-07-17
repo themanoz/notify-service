@@ -16,7 +16,6 @@ function startCronScheduler() {
             select:{
               id: true,
               full_name: true,
-             
             }
           },
           addedAt: true,
@@ -27,7 +26,10 @@ function startCronScheduler() {
 
       console.log(`Found ${repositories.length} repositories to check`);
 
+      // Collect unique projects
+      const uniqueProjects = new Map();
       for (const repository of repositories) {
+        const projectId = repository.project.id;
         const [owner, repo] = repository.project.full_name.split("/");
         if (!owner || !repo) {
           console.warn(
@@ -35,25 +37,35 @@ function startCronScheduler() {
           );
           continue;
         }
-
-        // ✅ Enqueue a single job per project
-        await githubCheckQueue.add(
-          `check-${repository.id}`,
-          {
-            projectId: repository.project.id,
+        // Only add if not already present
+        if (!uniqueProjects.has(projectId)) {
+          uniqueProjects.set(projectId, {
+            projectId,
             owner,
             repo,
             since: repository.lastChecked ?? repository.addedAt,
+          });
+        }
+      }
+
+      // Enqueue a single job per unique project
+      for (const project of uniqueProjects.values()) {
+        await githubCheckQueue.add(
+          `check-${project.projectId}`,
+          {
+            projectId: project.projectId,
+            owner: project.owner,
+            repo: project.repo,
+            since: project.since,
           },
           {
-            jobId: `check-${repository.id}`,
+            jobId: `check-${project.projectId}`,
             removeOnComplete: true,
             removeOnFail: true,
             timeout: 15000,
-          } 
+          }
         );
-
-        console.log(`Enqueued ${owner}/${repo}`);
+        console.log(`Enqueued ${project.owner}/${project.repo}`);
       }
     } catch (err) {
       console.error(`❌ Error running cron job`, err);
