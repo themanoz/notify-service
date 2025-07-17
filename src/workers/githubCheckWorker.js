@@ -48,28 +48,34 @@ const worker = new Worker(
 
       const userIssuesMap = {};
 
+      // Preprocess issue labels once
+      const processedIssues = issues.map((issue) => ({
+        title: issue.title,
+        url: issue.html_url,
+        labelSet: new Set(issue.labels.map((l) => l.name.toLowerCase())),
+      }));
+      
       for (const entry of watchlistEntries) {
         const userId = entry.userId;
-
-        if (!userIssuesMap[userId]) {
-          userIssuesMap[userId] = {};
-        }
-
-        const userLabels = entry.labels.map((label) => label.toLowerCase());
-
-        for (const issue of issues) {
-          const issueLabels = issue.labels.map((label) =>
-            label.name.toLowerCase()
+        const userLabelSet = new Set(entry.labels.map((l) => l.toLowerCase()));
+      
+        for (const issue of processedIssues) {
+          const hasMatchingLabel = [...userLabelSet].some((label) =>
+            issue.labelSet.has(label)
           );
-
-          if (issueLabels.some((label) => userLabels.includes(label))) {
+      
+          if (hasMatchingLabel) {
+            if (!userIssuesMap[userId]) {
+              userIssuesMap[userId] = {};
+            }
+      
             if (!userIssuesMap[userId][`${owner}/${repo}`]) {
               userIssuesMap[userId][`${owner}/${repo}`] = [];
             }
-
+      
             userIssuesMap[userId][`${owner}/${repo}`].push({
               title: issue.title,
-              url: issue.html_url,
+              url: issue.url,
             });
           }
         }
